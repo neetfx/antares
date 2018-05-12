@@ -25,6 +25,7 @@ import java.util.Set;
 public interface AntaresContext {
     /**
      * Get classes scanned by {@link AntaresScan} which have the given annotation
+     * @param advice The annotation class annotated by {@link AntaresManifestAdvice}
      * @return Set of the classes
      * @see AntaresScan
      * @see AntaresManifestAdvice
