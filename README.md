@@ -12,6 +12,10 @@ Antares is an SpringBoot extension used to simplify the process of dynamically r
 </dependency>
 ```
 
+**Sample Project**
+
+[Anatres Sample](https://github.com/prchen/antares-sample)
+
 ## Getting Start
 
 Firstly, define an ```AntaresManifestAdvice``` to tell Antares how to collect passengers and which **FactoryBean** class should be used to create the bean instance.
@@ -42,7 +46,7 @@ Thirdly, use your own annotation in your code.
 ```java
 @Foo
 public class MyBean { }
-``` 
+```
 
 Put it together.
 ```java
