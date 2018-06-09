@@ -9,7 +9,7 @@
     </appender>
 
     <logger name="org.neetfx.antares" level="INFO"/>
-    <logger name="org.neetfx.test.antares" level="INFO"/>
+    <logger name="test" level="INFO"/>
 
     <root level="WARN">
         <appender-ref ref="STDOUT" />

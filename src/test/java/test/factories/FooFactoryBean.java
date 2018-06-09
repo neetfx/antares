@@ -1,4 +1,4 @@
-package com.github.prchen.test.antares.starter.factories;
+package test.factories;
 
 import com.github.prchen.antares.starter.AntaresFactoryBean;
 import org.springframework.lang.Nullable;

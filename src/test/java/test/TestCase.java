@@ -1,11 +1,11 @@
-package com.github.prchen.test.antares.starter;
+package test;
 
 import com.github.prchen.antares.starter.AntaresContext;
-import com.github.prchen.test.antares.starter.annotations.Bar;
-import com.github.prchen.test.antares.starter.annotations.Foo;
-import com.github.prchen.test.antares.starter.classes.BarCandidate1;
-import com.github.prchen.test.antares.starter.classes.BarCandidate2;
-import com.github.prchen.test.antares.starter.interfaces.FooInterface;
+import test.annotations.Bar;
+import test.annotations.Foo;
+import test.classes.BarCandidate1;
+import test.classes.BarCandidate2;
+import test.interfaces.FooInterface;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
