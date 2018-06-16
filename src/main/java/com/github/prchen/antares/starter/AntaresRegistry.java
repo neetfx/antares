@@ -31,6 +31,7 @@ import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.stereotype.Component;
@@ -82,7 +83,7 @@ class AntaresRegistry implements ApplicationContextAware, BeanDefinitionRegistry
     @Override
     public Set<Class<?>> getManifest(Class<? extends Annotation> advice) {
         return manifest.stream()
-                .filter(x -> x.getAnnotation(advice) != null)
+                .filter(x -> AnnotationUtils.findAnnotation(x, advice) != null)
                 .collect(Collectors.toSet());
     }
 
@@ -96,7 +97,7 @@ class AntaresRegistry implements ApplicationContextAware, BeanDefinitionRegistry
             if (className != null) {
                 try {
                     Class<?> clazz = Class.forName(className);
-                    if (clazz.getAnnotation(AntaresScan.class) != null) {
+                    if (AnnotationUtils.findAnnotation(clazz, AntaresScan.class) != null) {
                         result.add(clazz.getPackage().getName());
                     }
                 } catch (ClassNotFoundException e) {
@@ -114,31 +115,48 @@ class AntaresRegistry implements ApplicationContextAware, BeanDefinitionRegistry
 
     @SuppressWarnings("unchecked")
     private void initManifestAdvises() {
-        Set<Class<?>> types = new CandidateScanner(
-                Collections.singletonList(Annotation.class),
-                Collections.singletonList(AntaresManifestAdvice.class))
-                .scanTypes();
+        CandidateScanner scanner = new CandidateScanner();
+        AssignableTypeFilter classFilter = new AssignableTypeFilter(Annotation.class);
+        AnnotationTypeFilter metaFilter = new AnnotationTypeFilter(AntaresManifestAdvice.class);
+        scanner.addIncludeFilter((x, y) -> classFilter.match(x, y) && metaFilter.match(x, y));
+        Set<Class<?>> types = scanner.scanTypes();
         manifestAdvices = types.stream()
                 .map(x -> (Class<? extends Annotation>) x)
                 .collect(Collectors.toList())
                 .toArray(new Class[0]);
+        if (manifestAdvices.length > 0) {
+            String manifest = String.join(", ", Arrays.stream(manifestAdvices)
+                    .map(Class::getName)
+                    .collect(Collectors.toList()));
+            logger.info("Antares ManifestAdvice: " + manifest);
+        } else {
+            logger.info("No ManifestAdvice detected");
+        }
     }
 
     private void initFactories(BeanDefinitionRegistry registry) {
         for (Class<? extends Annotation> advise : manifestAdvices) {
-            Class<?> factoryClass = advise.getAnnotation(AntaresManifestAdvice.class).factoryClass();
-            if (factoryClass != AntaresFactoryBean.class) {
-                logger.info("Loading factory: " + factoryClass.getName());
-                new DefinitionScanner(registry, advise).scan(basePackages);
+            AntaresManifestAdvice meta = AnnotationUtils.findAnnotation(advise, AntaresManifestAdvice.class);
+            if (meta == null) {
+                logger.info("Skipping AntaresManifestAdvice due to unexpected reflection failure: " + advise.getName());
+            } else {
+                Class<?> factoryClass = meta.factoryClass();
+                if (factoryClass != AntaresFactoryBean.class) {
+                    logger.info("Loading factory: " + factoryClass.getName());
+                    new DefinitionScanner(registry, advise).scan(basePackages);
+                }
             }
         }
     }
 
     private void initManifest() {
-        manifest = new CandidateScanner(
-                Collections.emptyList(),
-                Arrays.asList(manifestAdvices))
-                .scanTypes();
+        CandidateScanner scanner = new CandidateScanner();
+        for (Class<? extends Annotation> advice : manifestAdvices) {
+            scanner.addIncludeFilter(new AnnotationTypeFilter(advice, false));
+        }
+        manifest = scanner.scanTypes().stream()
+                .filter(x -> !x.isAnnotation())
+                .collect(Collectors.toSet());
         if (manifest.size() > 0) {
             String manifest = String.join(", ", this.manifest.stream()
                     .map(Class::getName)
@@ -152,11 +170,12 @@ class AntaresRegistry implements ApplicationContextAware, BeanDefinitionRegistry
     class DefinitionScanner extends ClassPathBeanDefinitionScanner {
         private Class<?> factory;
 
+        @SuppressWarnings("all")
         private DefinitionScanner(BeanDefinitionRegistry registry, Class<? extends Annotation> advise) {
             super(registry, false);
             super.setResourceLoader(context);
             super.setBeanNameGenerator((d, r) -> StringUtils.uncapitalize(d.getBeanClassName()));
-            this.factory = advise.getAnnotation(AntaresManifestAdvice.class).factoryClass();
+            this.factory = AnnotationUtils.findAnnotation(advise, AntaresManifestAdvice.class).factoryClass();
             addIncludeFilter(new AnnotationTypeFilter(advise, false));
         }
 
@@ -180,6 +199,7 @@ class AntaresRegistry implements ApplicationContextAware, BeanDefinitionRegistry
                     beanDefinition.getPropertyValues().add("objectType", beanClass);
                 } catch (ClassNotFoundException e) {
                     AntaresRegistry.this.logger.warn("Failed to load class: " + className);
+                    beanDefinitions.remove(definition);
                 }
             }
             return beanDefinitions;
@@ -189,14 +209,8 @@ class AntaresRegistry implements ApplicationContextAware, BeanDefinitionRegistry
 
     class CandidateScanner extends ClassPathScanningCandidateComponentProvider {
 
-        private CandidateScanner(List<Class<?>> types, List<Class<? extends Annotation>> annotations) {
+        private CandidateScanner() {
             super(false);
-            for (Class<?> type : types) {
-                addIncludeFilter(new AssignableTypeFilter(type));
-            }
-            for (Class<? extends Annotation> annotation : annotations) {
-                addIncludeFilter(new AnnotationTypeFilter(annotation, false));
-            }
         }
 
         @Override
@@ -206,7 +220,7 @@ class AntaresRegistry implements ApplicationContextAware, BeanDefinitionRegistry
                             beanDefinition.getMetadata().isIndependent());
         }
 
-        Set<Class<?>> scanTypes() {
+        private Set<Class<?>> scanTypes() {
             Set<String> classNames = new HashSet<>();
             for (String basePackage : basePackages) {
                 findCandidateComponents(basePackage).stream()

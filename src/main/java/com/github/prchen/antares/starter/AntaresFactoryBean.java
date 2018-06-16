@@ -29,7 +29,7 @@ public abstract class AntaresFactoryBean implements FactoryBean<Object> {
      * @param objectType Bean type
      */
     public final void setObjectType(Class<?> objectType) {
-        if (this.objectType != null) {
+        if (this.objectType != null && this.objectType != objectType) {
             throw new IllegalStateException("objectType already set");
         }
         this.objectType = objectType;
@@ -39,8 +39,8 @@ public abstract class AntaresFactoryBean implements FactoryBean<Object> {
      * Get the bean type
      * @return Bean type
      */
-    @Nullable
     @Override
+    @Nullable
     public final Class<?> getObjectType() {
         return objectType;
     }
