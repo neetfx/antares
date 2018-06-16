@@ -1,4 +1,4 @@
-package com.github.prchen.test.antares.starter;
+package test;
 
 import com.github.prchen.antares.starter.AntaresScan;
 import org.springframework.boot.SpringApplication;

@@ -1,4 +1,4 @@
-package com.github.prchen.test.antares.starter.annotations;
+package test.annotations;
 
 import com.github.prchen.antares.starter.AntaresManifestAdvice;
 
@@ -7,8 +7,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target({ElementType.TYPE})
+@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @AntaresManifestAdvice
-public @interface Bar {
+public @interface BarMeta {
 }

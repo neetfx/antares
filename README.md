@@ -8,7 +8,7 @@ Antares is an SpringBoot extension used to simplify the process of dynamically r
 <dependency>
     <groupId>com.github.prchen</groupId>
     <artifactId>spring-boot-starter-antares</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
 </dependency>
 ```
 

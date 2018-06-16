@@ -1,7 +1,7 @@
-package com.github.prchen.test.antares.starter.annotations;
+package test.annotations;
 
 import com.github.prchen.antares.starter.AntaresManifestAdvice;
-import com.github.prchen.test.antares.starter.factories.FooFactoryBean;
+import test.factories.FooFactoryBean;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
